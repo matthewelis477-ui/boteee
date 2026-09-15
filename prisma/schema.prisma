@@ -1,0 +1,444 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  passwordHash       String
+  name               String
+  locale             String    @default("en")
+  experience         String    @default("beginner")
+  marketType         String    @default("spot")
+  style              String    @default("intraday")
+  coins              String    @default("")
+  timeframes         String    @default("1 Hour,4 Hour")
+  risk               String    @default("low")
+  plan               String    @default("free")
+  activationCode     String    @default("")
+  expiresAt          DateTime?
+  paperBalance       Float     @default(10000)
+  paperEquity        Float     @default(10000)
+  onboardingComplete Boolean   @default(false)
+  minConfidence      Int       @default(70)
+  maxLeverage        Int       @default(3)
+  directions         String    @default("LONG,SHORT")
+  quietHours         String    @default("23:00-07:00")
+  notify             String    @default("app,telegram")
+  signalFormat       String    @default("beginner")
+  telegramChatId     String    @default("")
+  telegramLinkCode   String    @default("")
+  role               String    @default("user")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  subscriptions      Subscription[]
+  invoices           Invoice[]
+  credentials        ExchangeCredential[]
+  tradingPrefs       TradingPrefs?
+  managedTrades      ManagedTrade[]
+  paperTrades        PaperTrade[]
+  holdings           Holding[]
+  journalEntries     JournalEntry[]
+  supportTickets     SupportTicket[]
+  quizAttempts       QuizAttempt[]
+  communityVote      CommunityVote?
+  notices            UserNotice[]
+}
+
+model ActivationCode {
+  id             String  @id @default(cuid())
+  code           String  @unique
+  plan           String
+  days           Int
+  label          String
+  maxRedemptions Int     @default(10000)
+  redeemedCount  Int     @default(0)
+  active         Boolean @default(true)
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      String
+  interval  String
+  status    String
+  provider  String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Invoice {
+  id             String    @id @default(cuid())
+  userId         String?
+  user           User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email          String
+  plan           String
+  interval       String
+  amountUsd      Float
+  method         String    @default("usdt")
+  network        String    @default("TRC20")
+  status         String
+  activationCode String?
+  cryptoRef      String?
+  txHash         String?   @unique
+  paidAt         DateTime?
+  paidSource     String?
+  createdAt      DateTime  @default(now())
+
+  @@index([status, createdAt])
+  @@index([email])
+}
+
+model MarketSignal {
+  id              String   @id
+  side            String
+  asset           String
+  exchange        String
+  marketType      String
+  entryLow        Float
+  entryHigh       Float
+  target1         Float
+  target2         Float
+  target3         Float
+  stopLoss        Float
+  leverage        String
+  rr              Float
+  confidence      Int
+  style           String
+  timeframe       String
+  validForMinutes Int
+  marketCondition String
+  risk            String
+  publishedAt     DateTime
+  status          String
+  delayed         Boolean  @default(false)
+  approved        Boolean  @default(false)
+  strategyVersion String   @default("v1-ema-rsi")
+  whyJson         String
+  updatesJson     String
+  createdAt       DateTime @default(now())
+  managedTrades   ManagedTrade[]
+
+  @@index([publishedAt])
+  @@index([approved, status])
+}
+
+model PipelineRun {
+  id     String   @id @default(cuid())
+  ranAt  DateTime @default(now())
+  source String
+  count  Int
+  note   String
+}
+
+model ScannerSnapshot {
+  id        String   @id @default("latest")
+  json      String
+  updatedAt DateTime @updatedAt
+}
+
+model NewsEvent {
+  id         String   @id @default(cuid())
+  title      String
+  whenLabel  String
+  impact     String
+  protection String
+  startsAt   DateTime?
+  source     String   @default("calendar")
+  createdAt  DateTime @default(now())
+}
+
+model FuturesSnapshot {
+  id        String   @id @default("latest")
+  json      String
+  updatedAt DateTime @updatedAt
+}
+
+model ExchangeCredential {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exchange        String
+  apiKeyEnc       String
+  apiSecretEnc    String
+  passphraseEnc   String   @default("")
+  label           String   @default("Exchange")
+  canTrade        Boolean  @default(false)
+  canWithdraw     Boolean  @default(true)
+  enabled         Boolean  @default(true)
+  lastValidatedAt DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, exchange])
+  @@index([userId])
+}
+
+model TradingPrefs {
+  id               String  @id @default(cuid())
+  userId           String  @unique
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  autoTradeEnabled Boolean @default(false)
+  preferredVenue   String  @default("binance")
+  maxRiskPct       Float   @default(1)
+  maxLeverage      Int     @default(3)
+  maxOpenTrades    Int     @default(3)
+  markets          String  @default("spot,futures")
+  killSwitch       Boolean @default(false)
+  capitalUsd       Float   @default(1000)
+}
+
+model ManagedTrade {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  signalId        String
+  signal          MarketSignal @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  exchange        String
+  marketType      String
+  asset           String
+  side            String
+  qty             Float
+  remainingQty    Float    @default(0)
+  entry           Float
+  stopLoss        Float
+  target1         Float
+  target2         Float
+  target3         Float
+  leverage        Int      @default(1)
+  status          String
+  protectStatus   String   @default("none")
+  clientOrderId   String?
+  entryOrderId    String?
+  slOrderId       String?
+  tp1OrderId      String?
+  tp2OrderId      String?
+  tp3OrderId      String?
+  filledEntry     Float?
+  realizedPnl     Float    @default(0)
+  feesUsd         Float    @default(0)
+  hitT1           Boolean  @default(false)
+  hitT2           Boolean  @default(false)
+  hitT3           Boolean  @default(false)
+  slMovedToBe     Boolean  @default(false)
+  errorMessage    String?
+  lastSyncedAt    DateTime?
+  openedAt        DateTime @default(now())
+  closedAt        DateTime?
+  events          TradeEvent[]
+
+  @@unique([userId, signalId])
+  @@unique([clientOrderId])
+  @@index([status])
+  @@index([userId, status])
+  @@index([protectStatus])
+}
+
+model CronLock {
+  id        String   @id
+  holder    String
+  expiresAt DateTime
+  updatedAt DateTime @updatedAt
+}
+
+model TradeEvent {
+  id        String   @id @default(cuid())
+  tradeId   String
+  trade     ManagedTrade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([tradeId, createdAt])
+}
+
+model PaperTrade {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  signalId     String
+  asset        String
+  side         String
+  entry        Float
+  stop         Float
+  sizeUsd      Float
+  status       String
+  pnl          Float    @default(0)
+  followedStop Boolean  @default(true)
+  notes        String   @default("")
+  openedAt     DateTime @default(now())
+  closedAt     DateTime?
+
+  @@index([userId])
+}
+
+model Holding {
+  id        String @id @default(cuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asset     String
+  amount    Float
+  avgPrice  Float
+
+  @@index([userId])
+}
+
+model JournalEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@unique([userId])
+}
+
+model StrategyVersion {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String
+  active      Boolean  @default(false)
+  paramsJson  String   @default("{}")
+  createdAt   DateTime @default(now())
+  backtests   BacktestRun[]
+}
+
+model BacktestRun {
+  id               String   @id @default(cuid())
+  strategyId       String
+  strategy         StrategyVersion @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+  symbol           String
+  interval         String
+  bars             Int
+  trades           Int
+  winRate          Float
+  profitFactor     Float
+  maxDrawdownPct   Float
+  avgReturnPct     Float
+  expectancyPct    Float
+  notes            String   @default("")
+  resultsJson      String   @default("{}")
+  createdAt        DateTime @default(now())
+
+  @@index([strategyId, createdAt])
+}
+
+model SignalQaNote {
+  id        String   @id @default(cuid())
+  signalId  String
+  adminId   String
+  decision  String
+  note      String
+  createdAt DateTime @default(now())
+
+  @@index([signalId])
+}
+
+model SupportTicket {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email     String
+  category  String
+  subject   String
+  body      String
+  invoiceId String?
+  txHash    String?
+  status    String   @default("open")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model TradeJob {
+  id         String   @id @default(cuid())
+  tradeId    String?
+  userId     String
+  signalId   String?
+  kind       String
+  payloadJson String
+  attempts   Int      @default(0)
+  maxAttempts Int     @default(5)
+  status     String   @default("pending")
+  lastError  String?
+  runAfter   DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([status, runAfter])
+}
+
+model Lesson {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  titleEn   String
+  titleHi   String
+  bodyEn    String
+  bodyHi    String
+  sortOrder Int      @default(0)
+  published Boolean  @default(true)
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  correct   Boolean
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model CommunityVote {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coin      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([coin])
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  toEmail   String
+  subject   String
+  template  String
+  status    String
+  metaJson  String   @default("{}")
+  createdAt DateTime @default(now())
+}
+
+model UserNotice {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String
+  title     String
+  body      String   @default("")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read, createdAt])
+}
+
+/** Platform launch config (admin-editable). Secrets stored encrypted. */
+model PlatformSetting {
+  key       String   @id
+  value     String   @default("")
+  secret    Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+  updatedBy String   @default("")
+}
