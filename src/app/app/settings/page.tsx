@@ -205,7 +205,7 @@ export default function SettingsPage() {
       <div className="panel space-y-4 p-5">
         <h2 className="font-display text-lg">Auto-trading</h2>
         <p className="text-sm text-[var(--muted)]">
-          Available on Pro and above. Connect Binance, Bybit, or OKX to execute approved signals automatically.
+          Available on Pro and above. Connect Binance, Bybit, or OKX to execute live signals automatically.
         </p>
         {prefs ? (
           <div className="grid gap-3 md:grid-cols-2">

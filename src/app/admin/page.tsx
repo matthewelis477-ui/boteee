@@ -439,62 +439,46 @@ export default function AdminPage() {
       </section>
 
       <section className="panel p-5">
-        <h2 className="font-display text-lg">Signal approval + human QA</h2>
-        <p className="mt-1 text-sm text-[var(--muted)]">Only approved signals notify Telegram and trigger auto-trading.</p>
-        <Field label="QA note (required for reject / optional for approve)">
-          <input className={inputClass} value={qaNote} onChange={(e) => setQaNote(e.target.value)} placeholder="Structure clean / skip choppy open" />
+        <h2 className="font-display text-lg">Live signals</h2>
+        <p className="mt-1 text-sm text-[var(--muted)]">
+          Directional signals are auto-approved when published. Telegram and auto-trade use them immediately. You can still reject a bad one.
+        </p>
+        <Field label="Note (required to reject)">
+          <input className={inputClass} value={qaNote} onChange={(e) => setQaNote(e.target.value)} placeholder="Why this setup is invalid" />
         </Field>
         {queue.map((s) => (
           <div key={s.id} className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/5 pt-3 text-sm">
             <span>
-              {s.asset} {s.side} · {s.confidence}% · {s.approved ? "Approved" : "Pending"}
+              {s.asset} {s.side} · {s.confidence}% · {s.approved ? "Live" : "Held"}
             </span>
             <div className="flex gap-2">
-              {!s.approved && s.side !== "NO-TRADE" ? (
-                <>
-                  <button
-                    className={btnGhost}
-                    onClick={async () => {
-                      if (!qaNote || qaNote.trim().length < 8) {
-                        setMsg("QA note required (8+ characters) before approve.");
-                        return;
-                      }
-                      try {
-                        await api("/api/signals", {
-                          method: "POST",
-                          body: JSON.stringify({ action: "approve", signalId: s.id, note: qaNote.trim() }),
-                        });
-                        await load();
-                      } catch (e) {
-                        setMsg(e instanceof Error ? e.message : "Approve failed");
-                      }
-                    }}
-                  >
-                    QA approve & execute
-                  </button>
-                  <button
-                    className={btnGhost}
-                    onClick={async () => {
-                      if (!qaNote) {
-                        setMsg("Add a QA note before rejecting.");
-                        return;
-                      }
+              {s.approved && s.side !== "NO-TRADE" ? (
+                <button
+                  className={btnGhost}
+                  onClick={async () => {
+                    if (!qaNote.trim()) {
+                      setMsg("Add a short reject note.");
+                      return;
+                    }
+                    try {
                       await api("/api/admin/strategy", {
                         method: "POST",
                         body: JSON.stringify({ action: "qa", signalId: s.id, decision: "reject", note: qaNote }),
                       });
                       await load();
-                    }}
-                  >
-                    Reject
-                  </button>
-                </>
+                    } catch (e) {
+                      setMsg(e instanceof Error ? e.message : "Reject failed");
+                    }
+                  }}
+                >
+                  Reject
+                </button>
               ) : null}
             </div>
           </div>
         ))}
         <div className="mt-4 text-xs text-[var(--muted)]">
-          Recent QA: {(strategy?.qa || []).slice(0, 5).map((q) => `${q.decision}:${q.note}`).join(" · ") || "—"}
+          Recent overrides: {(strategy?.qa || []).slice(0, 5).map((q) => `${q.decision}:${q.note}`).join(" · ") || "—"}
         </div>
       </section>
 

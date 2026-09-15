@@ -468,6 +468,7 @@ export async function runSignalPipeline() {
   };
 
   for (const s of signals) {
+    const autoApproved = s.side === "LONG" || s.side === "SHORT";
     const existing = await prisma.marketSignal.findUnique({ where: { id: s.id } });
     if (!existing) {
       await prisma.marketSignal.create({
@@ -494,7 +495,7 @@ export async function runSignalPipeline() {
           publishedAt: new Date(s.publishedAt),
           status: s.status,
           delayed: Boolean(s.delayed),
-          approved: s.side === "NO-TRADE",
+          approved: autoApproved,
           strategyVersion: strategy.key,
           whyJson: JSON.stringify(s.why),
           updatesJson: JSON.stringify(s.updates),
@@ -502,20 +503,26 @@ export async function runSignalPipeline() {
       });
       continue;
     }
-    if (existing.approved && existing.side !== "NO-TRADE") {
-      const expired = Date.now() - existing.publishedAt.getTime() > existing.validForMinutes * 60_000;
+
+    // Keep levels locked while an approved directional signal is still within its validity window
+    // (avoids moving stops mid-trade). Expired / NO-TRADE rows refresh freely.
+    const stillValid = Date.now() - existing.publishedAt.getTime() <= existing.validForMinutes * 60_000;
+    if (existing.approved && existing.side !== "NO-TRADE" && stillValid && autoApproved) {
       await prisma.marketSignal.update({
         where: { id: s.id },
         data: {
-          status: expired ? "expired" : existing.status,
+          status: existing.status === "paused" ? "active" : existing.status,
+          confidence: s.confidence,
+          marketCondition: s.marketCondition,
           whyJson: JSON.stringify({
             ...JSON.parse(existing.whyJson || "{}"),
-            liveNote: "Levels locked after approval.",
+            liveNote: "Auto-approved · entry levels locked until expiry.",
           }),
         },
       });
       continue;
     }
+
     await prisma.marketSignal.update({
       where: { id: s.id },
       data: {
@@ -532,12 +539,24 @@ export async function runSignalPipeline() {
         marketCondition: s.marketCondition,
         risk: s.risk,
         status: s.status,
+        publishedAt: new Date(s.publishedAt),
+        approved: autoApproved,
         strategyVersion: strategy.key,
         whyJson: JSON.stringify(s.why),
         updatesJson: JSON.stringify(s.updates),
       },
     });
   }
+
+  // Backfill: any live directional ideas still pending become auto-approved
+  await prisma.marketSignal.updateMany({
+    where: {
+      approved: false,
+      side: { in: ["LONG", "SHORT"] },
+      status: { in: ["active", "monitoring"] },
+    },
+    data: { approved: true },
+  });
 
   await prisma.scannerSnapshot.upsert({
     where: { id: "latest" },

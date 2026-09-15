@@ -28,7 +28,7 @@ export const PLANS: Plan[] = [
     priceYearly: 290,
     for: "Active traders",
     access: "Live signals you trade yourself",
-    features: ["Live approved signals", "Telegram alerts", "Risk calculator", "Clear trade rationale"],
+    features: ["Live signals", "Telegram alerts", "Risk calculator", "Clear trade rationale"],
   },
   {
     id: "pro",
