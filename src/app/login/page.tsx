@@ -5,11 +5,13 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { btnPrimary, Field, inputClass } from "@/components/ui";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const params = useSearchParams();
+  const next = params.get("next") || "/app";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -19,7 +21,9 @@ export default function LoginPage() {
     setError("");
     try {
       await api("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
-      router.push("/app");
+      const dest = next.startsWith("/") ? next : "/app";
+      router.push(dest);
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Incorrect email or password");
     }
@@ -57,5 +61,13 @@ export default function LoginPage() {
       </div>
       <SiteFooter />
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center text-[var(--muted)]">Loading…</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

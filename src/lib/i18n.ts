@@ -53,7 +53,7 @@ export const copy = {
     },
     checkout: {
       title: "Complete payment",
-      exactAmount: "Send the exact USDT amount on TRC20, then paste your transaction ID below.",
+      exactAmount: "Send the exact USDT amount on BEP20 (BSC), then paste your transaction hash below.",
       submitTx: "Confirm payment",
       openTicket: "Need help? Contact support",
     },
@@ -110,7 +110,7 @@ export const copy = {
     },
     checkout: {
       title: "भुगतान पूरा करें",
-      exactAmount: "TRC20 पर सटीक USDT राशि भेजें, फिर नीचे ट्रांज़ैक्शन ID पेस्ट करें।",
+      exactAmount: "BEP20 (BSC) पर सटीक USDT भेजें, फिर नीचे ट्रांज़ैक्शन हैश पेस्ट करें।",
       submitTx: "भुगतान पुष्टि करें",
       openTicket: "मदद चाहिए? सहायता से संपर्क करें",
     },

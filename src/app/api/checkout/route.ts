@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     const interval = body.interval === "yearly" ? "yearly" : "monthly";
     const { ensurePlatformConfig, getPlatform } = await import("@/lib/platform-config");
     await ensurePlatformConfig();
-    const network = String(body.network || getPlatform("crypto_usdt_network") || "TRC20");
+    const network = String(body.network || getPlatform("crypto_usdt_network") || "BEP20");
 
     if (plan === "free") {
       const user = await ensureUser(body);

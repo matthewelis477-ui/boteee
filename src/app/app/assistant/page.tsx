@@ -26,7 +26,7 @@ export default function AssistantPage() {
     <div className="space-y-6">
       <h1 className="font-display text-3xl font-semibold tracking-tight">Trading assistant</h1>
       <p className="text-[var(--muted)]">
-        Answers from live prices, published signals, news, and your trades — not demo copy.
+        Answers from live prices, published signals, news, and your trades.
       </p>
       <div className="flex flex-wrap gap-2">
         {STARTERS.map((s) => (
@@ -58,7 +58,7 @@ export default function AssistantPage() {
       {error ? <p className="text-rose-300">{error}</p> : null}
       {a ? (
         <div className="panel space-y-2 p-5 leading-7">
-          {mode ? <p className="text-xs uppercase tracking-wide text-[var(--muted)]">Source: {mode === "llm" ? "AI + live data" : "live data"}</p> : null}
+          {mode === "llm" ? <p className="text-xs uppercase tracking-wide text-[var(--muted)]">Live data + assistant</p> : null}
           <div className="whitespace-pre-wrap">{a}</div>
         </div>
       ) : null}

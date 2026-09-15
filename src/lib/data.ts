@@ -8,7 +8,7 @@ export const VALID_CODES: Record<string, { plan: Plan["id"]; days: number; label
   "BOTEE-PRO": { plan: "pro", days: 30, label: "Pro monthly" },
   "BOTEE-ELITE": { plan: "elite", days: 30, label: "Elite monthly" },
   "FOUNDER-LIFE": { plan: "elite", days: 3650, label: "Lifetime founder" },
-  "INST-DEMO": { plan: "institutional", days: 90, label: "Institutional access" },
+  "INST-ACCESS": { plan: "institutional", days: 90, label: "Institutional access" },
 };
 
 export const PLANS: Plan[] = [

@@ -41,6 +41,6 @@ export async function GET(req: Request) {
       paidSource: invoice.paidSource,
     },
     address,
-    network: invoice.network || getPlatform("crypto_usdt_network") || "TRC20",
+    network: invoice.network || getPlatform("crypto_usdt_network") || "BEP20",
   });
 }

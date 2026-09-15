@@ -30,7 +30,7 @@ function envDefaults(): Cache {
     telegram_bot_username: process.env.TELEGRAM_BOT_USERNAME || "",
     telegram_admin_chat_id: process.env.TELEGRAM_ADMIN_CHAT_ID || "",
     crypto_usdt_address: process.env.CRYPTO_USDT_ADDRESS || "",
-    crypto_usdt_network: process.env.CRYPTO_USDT_NETWORK || "TRC20",
+    crypto_usdt_network: process.env.CRYPTO_USDT_NETWORK || "BEP20",
     trongrid_api_key: process.env.TRONGRID_API_KEY || "",
     binance_testnet: process.env.BINANCE_TESTNET === "0" || process.env.BINANCE_TESTNET === "false" ? "0" : "1",
     live_trading_enabled:
@@ -97,7 +97,11 @@ export async function getPlatformPublicStatus() {
   const botOk = Boolean(username && !blocked.has(username.toLowerCase()) && /^[A-Za-z0-9_]{5,32}$/.test(username));
   const tokenOk = Boolean(cfg.telegram_bot_token);
   const address = cfg.crypto_usdt_address || "";
-  const addressOk = Boolean(address && !address.toLowerCase().includes("your") && address.length >= 20);
+  const addressOk = Boolean(
+    address &&
+      address.length >= 20 &&
+      !/your|notreal|placeholder|xyzbotee/i.test(address),
+  );
 
   return {
     appUrl: cfg.app_url || "",
@@ -112,7 +116,7 @@ export async function getPlatformPublicStatus() {
     payments: {
       address: addressOk ? address : "",
       addressConfigured: addressOk,
-      network: cfg.crypto_usdt_network || "TRC20",
+      network: cfg.crypto_usdt_network || "BEP20",
       trongridKeySet: Boolean(cfg.trongrid_api_key),
       trongridKeyMasked: cfg.trongrid_api_key ? maskSecret(cfg.trongrid_api_key) : "",
       ready: addressOk,

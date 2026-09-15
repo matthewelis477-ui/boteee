@@ -1,6 +1,5 @@
 "use client";
 
-import { PLANS, VALID_CODES } from "@/lib/data";
 import { api } from "@/lib/api";
 import { btnGhost, btnPrimary, Field, inputClass } from "@/components/ui";
 import Link from "next/link";
@@ -75,7 +74,7 @@ export default function AdminPage() {
     telegram_bot_username: "",
     telegram_admin_chat_id: "",
     crypto_usdt_address: "",
-    crypto_usdt_network: "TRC20",
+    crypto_usdt_network: "BEP20",
     trongrid_api_key: "",
     binance_testnet: true,
     live_trading_enabled: false,
@@ -95,7 +94,7 @@ export default function AdminPage() {
         telegram_bot_username: settings.telegram.username || "",
         telegram_admin_chat_id: settings.telegram.adminChatId || "",
         crypto_usdt_address: settings.payments.address || "",
-        crypto_usdt_network: settings.payments.network || "TRC20",
+        crypto_usdt_network: settings.payments.network || "BEP20",
         binance_testnet: settings.trading.testnet,
         live_trading_enabled: settings.trading.liveEnabled,
         telegram_bot_token: "",
@@ -103,7 +102,7 @@ export default function AdminPage() {
       }));
       setMsg("");
     } catch {
-      setMsg("Log in as admin to manage launch config, invoices, and approvals.");
+      setMsg("Admin session required.");
     }
   }
 
@@ -173,11 +172,14 @@ export default function AdminPage() {
             />
           </Field>
           <Field label="USDT network">
-            <input
+            <select
               className={inputClass}
               value={cfg.crypto_usdt_network}
               onChange={(e) => setCfg({ ...cfg, crypto_usdt_network: e.target.value })}
-            />
+            >
+              <option value="BEP20">BEP20 (BSC)</option>
+              <option value="TRC20">TRC20 (Tron)</option>
+            </select>
           </Field>
           <Field label="Telegram bot token">
             <input
@@ -204,23 +206,25 @@ export default function AdminPage() {
               placeholder="For ops alerts"
             />
           </Field>
-          <Field label="USDT deposit address (TRC20)">
+          <Field label="USDT deposit address">
             <input
               className={inputClass}
               value={cfg.crypto_usdt_address}
               onChange={(e) => setCfg({ ...cfg, crypto_usdt_address: e.target.value })}
-              placeholder="T…"
+              placeholder="0x… for BEP20"
             />
           </Field>
-          <Field label="TronGrid API key (optional)">
-            <input
-              className={inputClass}
-              value={cfg.trongrid_api_key}
-              onChange={(e) => setCfg({ ...cfg, trongrid_api_key: e.target.value })}
-              placeholder={launch?.payments.trongridKeySet ? launch.payments.trongridKeyMasked : "Optional"}
-              autoComplete="off"
-            />
-          </Field>
+          {String(cfg.crypto_usdt_network).toUpperCase().includes("TRC") ? (
+            <Field label="TronGrid API key (optional)">
+              <input
+                className={inputClass}
+                value={cfg.trongrid_api_key}
+                onChange={(e) => setCfg({ ...cfg, trongrid_api_key: e.target.value })}
+                placeholder={launch?.payments.trongridKeySet ? launch.payments.trongridKeyMasked : "Optional"}
+                autoComplete="off"
+              />
+            </Field>
+          ) : null}
         </div>
 
         <div className="flex flex-wrap gap-4 text-sm">
@@ -517,9 +521,8 @@ export default function AdminPage() {
       </section>
 
       <section className="panel p-5 text-sm text-[var(--muted)]">
-        <h2 className="font-display text-lg text-[var(--text)]">Codes · Plans</h2>
-        <p className="mt-2">{Object.keys(VALID_CODES).join(", ")}</p>
-        <p>{PLANS.map((p) => p.name).join(", ")}</p>
+        <h2 className="font-display text-lg text-[var(--text)]">Activation codes</h2>
+        <p className="mt-2">Managed in the database. Seeded codes: BOTEE-TRIAL-7, BOTEE-FREE, BOTEE-BASIC, BOTEE-PRO, BOTEE-ELITE, FOUNDER-LIFE.</p>
       </section>
     </div>
   );

@@ -63,7 +63,7 @@ export function invoiceCreatedEmail(opts: { name: string; plan: string; amount: 
     subject: `Botee invoice · ${opts.plan} $${opts.amount}`,
     html: `<p>Hi ${opts.name},</p>
 <p>Your invoice for <b>${opts.plan}</b> is ready.</p>
-<p>Amount: <b>$${opts.amount} USDT (TRC20)</b><br/>Reference: <code>${opts.ref}</code></p>
+<p>Amount: <b>$${opts.amount} USDT</b><br/>Reference: <code>${opts.ref}</code></p>
 <p><a href="${opts.payUrl}">Open payment page</a></p>
 <p>Send the exact amount. After payment, paste your transaction ID on the payment page. If anything looks off, contact support.</p>`,
   };

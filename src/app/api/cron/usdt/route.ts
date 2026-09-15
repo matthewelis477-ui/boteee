@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { scanUsdtPayments } from "@/lib/payments/trc20";
+import { scanUsdtPayments } from "@/lib/payments/usdt";
 
 function authorized(req: Request) {
   const url = new URL(req.url);

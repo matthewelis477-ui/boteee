@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { readUser, toProfile } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { markInvoicePaid } from "@/lib/billing";
-import { verifyTxForInvoice } from "@/lib/payments/trc20";
+import { verifyUsdtPayment } from "@/lib/payments/usdt";
 import { notifyAdmin } from "@/lib/telegram";
 
 export async function POST(req: Request) {
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
   if (body.txHash && isOwner && invoice.status === "pending") {
     const txHash = String(body.txHash).trim();
-    const verified = await verifyTxForInvoice(invoice.id, txHash);
+    const verified = await verifyUsdtPayment(invoice.id, txHash);
     if (verified.ok) {
       return NextResponse.json({
         ok: true,

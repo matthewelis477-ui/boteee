@@ -85,7 +85,7 @@ async function main() {
     });
   }
 
-  const email = (process.env.ADMIN_EMAIL || "admin@botee.local").toLowerCase();
+  const email = (process.env.ADMIN_EMAIL || "hamsdel244@gmail.com").toLowerCase();
   const password = process.env.ADMIN_PASSWORD || "ChangeMeAdmin1";
   const passwordHash = await bcrypt.hash(password, 10);
   await prisma.user.upsert({
