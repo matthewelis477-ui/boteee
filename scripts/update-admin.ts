@@ -1,3 +1,11 @@
+/**
+ * One-shot admin/payment updater.
+ * Usage:
+ *   set ADMIN_EMAIL=... ADMIN_PASSWORD=... CRYPTO_USDT_ADDRESS=... CRYPTO_USDT_NETWORK=BEP20
+ *   npx tsx scripts/update-admin.ts
+ *
+ * Reads values from env / .env — does not hardcode secrets.
+ */
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 import { readFileSync, existsSync, writeFileSync } from "node:fs";
@@ -20,7 +28,7 @@ function loadEnv() {
 
 function setEnv(key: string, value: string) {
   const p = resolve(process.cwd(), ".env");
-  let t = readFileSync(p, "utf8");
+  let t = existsSync(p) ? readFileSync(p, "utf8") : "";
   const line = `${key}="${value}"`;
   const re = new RegExp(`^${key}=.*$`, "m");
   t = re.test(t) ? t.replace(re, line) : `${t.trimEnd()}\n${line}\n`;
@@ -30,22 +38,22 @@ function setEnv(key: string, value: string) {
 
 async function main() {
   loadEnv();
-  const email = "hamsdel244@gmail.com";
-  const password = "Bolu3103";
-  const address = "0x78e5b035634cA01B5Caf2F1f36D6A435CE64C09e";
-  const network = "BEP20";
-  const appUrl = "https://boteee-six.vercel.app";
+  const email = (process.env.ADMIN_EMAIL || "").toLowerCase();
+  const password = process.env.ADMIN_PASSWORD || "";
+  const address = process.env.CRYPTO_USDT_ADDRESS || "";
+  const network = process.env.CRYPTO_USDT_NETWORK || "BEP20";
+  const appUrl = process.env.APP_URL || "https://boteee-six.vercel.app";
 
-  setEnv("ADMIN_EMAIL", email);
-  setEnv("ADMIN_PASSWORD", password);
-  setEnv("CRYPTO_USDT_ADDRESS", address);
-  setEnv("CRYPTO_USDT_NETWORK", network);
+  if (!email || !password || !address) {
+    throw new Error("Set ADMIN_EMAIL, ADMIN_PASSWORD, CRYPTO_USDT_ADDRESS in .env first");
+  }
+
   setEnv("APP_URL", appUrl);
+  setEnv("CRYPTO_USDT_NETWORK", network);
 
   const prisma = new PrismaClient();
   const passwordHash = await bcrypt.hash(password, 10);
 
-  // Demote old default admin if present
   await prisma.user.updateMany({
     where: { email: "admin@botee.local" },
     data: { role: "user" },
